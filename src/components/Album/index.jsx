@@ -1,5 +1,3 @@
-import React from "react";
-
 const Album = ({ data }) => {
     const year = data.release_date.split(/-/gi)[0];
     return (

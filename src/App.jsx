@@ -1,26 +1,30 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Feed from "./components/Feed";
-import Input from "./components/Input";
-import Button from "./components/Button";
 import api from "./api";
 import ArtistContainer from "./containers/ArtistContainer";
+import { useQuery } from "react-query";
+import Skeleton from "react-loading-skeleton";
+import Header from "./containers/Header";
 
 function App() {
-    const [loading, setLoading] = useState(false);
-    const [data, setData] = useState([]);
+    const [value, setValue] = useState("");
     const [currentId, setCurrentId] = useState(null);
     const ref = useRef();
 
-    useEffect(() => {
-        handleSubmit();
-    }, []);
+    const { data, isLoading, isFetching, refetch } = useQuery({
+        queryKey: ["search"],
+        queryFn: () => api.search({ query: value || "afro" }),
+    });
 
     if (currentId) {
         return (
             <div className="min-h-screen pb-20 bg-slate-100">
                 <div className="container mx-auto px-4">
                     <header className="py-10 text-center">
-                        <a href="/" className="text-blue-500">
+                        <a
+                            onClick={() => setCurrentId(null)}
+                            className="text-blue-500 cursor-pointer"
+                        >
                             Home
                         </a>
                     </header>
@@ -35,41 +39,38 @@ function App() {
     return (
         <div className="min-h-screen pb-20 bg-slate-100">
             <div className="container mx-auto px-4">
-                <header className="py-10 text-center">
-                    <a href="/" className="text-blue-500">
-                        Home
-                    </a>
-                </header>
-                <div>
-                    <form
-                        onSubmit={handleSubmit}
-                        className="flex items-start space-x-6 w-full"
-                    >
-                        <Input name="search" className="flex-1" ref={ref} />
-                        <Button type="submit">Search</Button>
-                    </form>
-                </div>
+                <Header
+                    handleSubmit={handleSubmit}
+                    onChange={(e) => setValue(e.target.value)}
+                    handleHome={() => setCurrentId(null)}
+                    value={value}
+                />
+
                 <div className="mb-5">
-                    <p>Search results ({data.length})</p>
+                    <p>Search results ({data?.data?.length})</p>
                 </div>
-                {loading ? (
-                    <p>Loading...</p>
-                ) : (
-                    <>
-                        {data.length > 0 ? (
-                            <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
-                                {data.map((item) => (
-                                    <Feed
-                                        key={item.id}
-                                        data={item}
-                                        handleClick={(id) => setCurrentId(id)}
-                                    />
-                                ))}
-                            </div>
-                        ) : (
-                            <p>No result found</p>
-                        )}
-                    </>
+                {isLoading && (
+                    <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
+                        <Skeleton height={300} />
+                        <Skeleton height={300} />
+                        <Skeleton height={300} />
+                        <Skeleton height={300} />
+                    </div>
+                )}
+
+                {!isLoading && data?.data?.length > 0 && (
+                    <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
+                        {data?.data.map((item) => (
+                            <Feed
+                                key={item.id}
+                                data={item}
+                                handleClick={(id) => setCurrentId(id)}
+                            />
+                        ))}
+                    </div>
+                )}
+                {!isLoading && data?.data?.length === 0 && (
+                    <p>No result found</p>
                 )}
             </div>
         </div>
@@ -77,15 +78,7 @@ function App() {
 
     async function handleSubmit(e) {
         e?.preventDefault();
-        try {
-            setLoading(true);
-            const value = ref.current.value;
-            const result = await api.search({ query: value || "afro" });
-            setData(result.data);
-        } catch (error) {
-        } finally {
-            setLoading(false);
-        }
+        refetch();
     }
 }
 

@@ -1,4 +1,3 @@
-import React from "react";
 import { useQueries } from "react-query";
 import api from "../api";
 import { convertDuration } from "../utils/functions";

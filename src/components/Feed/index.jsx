@@ -1,4 +1,3 @@
-import React from "react";
 import { convertDuration } from "../../utils/functions";
 
 const Feed = ({ data, handleClick }) => {
